@@ -7,48 +7,52 @@ import {
   Button,
   Touchable,
   TouchableOpacity,
+  TextInput,
 } from 'react-native';
-import React, {useContext} from 'react';
+import React, {useContext, useState} from 'react';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import {GroceryContext} from './App';
+import { useDispatch, useSelector } from 'react-redux';
+import { handleFavorites, updateSearchText } from './redux/productSlice';
+import { handleCart } from './redux/cartSlice';
+import Realm from 'realm';
+
+
+import realm from './database/Grocery';
+
 
 const Products = ({navigation}) => {
-  const {groceryState, setGroceryState} = useContext(GroceryContext);
+  
 
-  const {cart} = groceryState;
+  const {products,search} =useSelector(state=>state.product);
+  const dispatch=useDispatch();
+
+  
+  const handlePress = (id) => {
+    const selectedProduct=products.find(ele=>ele.id===id);
+    dispatch(handleCart(selectedProduct));   
+  };
+
 
   const handleHeartPress = id => {
-    const itemInCart = cart.find(ele => ele.id === id);
-
-    if (!itemInCart) {
-      const itemToAdd = groceryState.items.find(item => item.id === id);
-      if (itemToAdd) {
-        setGroceryState({
-          ...groceryState,
-          cart: [...cart, itemToAdd],
-        });
-      }
-    } else {
-      const updatedCart = cart.filter(ele => ele.id !== id);
-      setGroceryState({
-        ...groceryState,
-        cart: updatedCart,
-      });
-    }
+    dispatch(handleFavorites(id));
   };
 
   const renderItem = ({item}) => {
-    const product = groceryState.cart.findIndex(ele => ele.id == item.id);
-
+    // const product = favorites.findIndex(ele => ele.id === item.id);
+    const product = products.findIndex(ele => ele.id === item.id&&ele.favorite);
     return (
       <View style={styles.card}>
+      <TouchableOpacity
+      onPress={()=>handlePress(item.id)}
+      >
         <Image
           source={{uri: item.uri}}
           style={styles.cardImage}
           onError={error => console.log('Image Load Error:', error)}
         />
+        </TouchableOpacity>
         <TouchableOpacity
           style={styles.heartButton}
           onPress={() => handleHeartPress(item.id)}>
@@ -105,23 +109,35 @@ const Products = ({navigation}) => {
     );
   };
 
+
+  const handleSearchChange = (text) => {
+    dispatch(updateSearchText(text));
+  };
+
   return (
     <View style={styles.productContainer}>
-      <Text style={styles.text}>80 Results found</Text>
+      <Text style={styles.text}>{products?.length} Results found</Text>
       <FlatList
-        data={groceryState.items}
+        data={products}
         renderItem={renderItem}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
       />
 
-      <View style={styles.buttonContainer}>
+      {/* <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.cartButton}
           onPress={() => navigation.navigate('CheckOut')}>
           <Text style={styles.cart}>Cart</Text>
         </TouchableOpacity>
-      </View>
+
+        <TextInput
+        style={styles.input}
+      placeholder="Search..."
+      value={search}
+      onChangeText={handleSearchChange}
+    />
+      </View> */}
     </View>
   );
 };
@@ -216,7 +232,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   buttonContainer: {
-    alignItems: 'center',
+    alignItems: 'center'
+    
   },
   heartButton: {
     position: 'absolute',
@@ -229,4 +246,16 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 5,
   },
+  input:{
+    height: 40,
+  borderColor: 'gray',
+  borderWidth: 1,
+  borderRadius: 8,
+  paddingHorizontal: 10,
+  marginTop: 16,
+  width: '100%',
+  color: 'black',
+  backgroundColor: 'white',
+
+  }
 });

@@ -6,16 +6,15 @@
  */
 
 import React, { createContext, useState } from 'react';
-
 import {
   Dimensions,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   useColorScheme,
   View,
 } from 'react-native';
-
 import {
   Colors,
 } from 'react-native/Libraries/NewAppScreen';
@@ -29,69 +28,123 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import Home from './Home';
 import uuid from 'react-native-uuid';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import Login from './Login';
+import { Provider, useDispatch, useSelector } from 'react-redux';
+import { store } from './redux/store';
+import Favorites from './Favorites';
+import SearchPage from './SearchPage';
+import { updateSearchText } from './redux/productSlice';
+
 
 enableScreens();
-
 
 const Stack = createNativeStackNavigator();
 
 
 
-export const GroceryContext = createContext();
-
-export const GroceryProvider = ({ children }) => {
-  const [groceryState, setGroceryState] = useState({
-    items: [
-      {
-        id: uuid.v4(),
-        uri: "https://static.wixstatic.com/media/nsplsh_664c6577374576635a5f34~mv2_d_4000_6000_s_4_2.jpg/v1/fill/w_732,h_794,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/nsplsh_664c6577374576635a5f34~mv2_d_4000_6000_s_4_2.jpg",
-        title: "Orange Fresh",
-        price:5.00,
-        qty:1
-      },
-      {
-        id: uuid.v4(),
-        uri: "https://housing.com/news/wp-content/uploads/2023/12/tomato-tree-f.jpg",
-        title: "Fresh red tomatoes",
-        price:5.00,
-        qty:1
-      },
-      {
-        id: uuid.v4(),
-        uri: "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcQhGh71NfkvD3UVSrYCF38AwQRMoW4xRWpa7VvtjaXh9hceDHwd",
-        title: "Green beans",
-        price:5.00,
-        qty:1
-      },
-    ],
-    cart: [
-      {
-        id: uuid.v4(),
-        uri: "https://rukminim2.flixcart.com/image/832/832/kp8ntzk0/plant-seed/m/e/2/120-jersey-boy-hybrid-tomato-120-seeds-vibex-original-imag3gbahxwkujnn.jpeg?q=70&crop=false",
-        title: "Tomato Pure ",
-        type:"Organic",
-        price:12.00,
-        qty:1
-      },
-      {
-        id: uuid.v4(),
-        uri: "https://earth2you.foodhub.org.za/Images/520x520/products/6563/r.jpg?fmt=lossy",
-        title: "Avocado Creamy",
-         type:"Pure, Fresh",
-         price:22.00,
-         oldPrice:28.00,
-         percentage:23.00,
-         qty:1
-      },
-    ],
-  });
+//header for product page
+const ProductsHeader = ({ navigation }) => {
+  const {cart} = useSelector(state => state.cart);
 
   return (
-    <GroceryContext.Provider value={{ groceryState, setGroceryState }}>
-      {children}
-    </GroceryContext.Provider>
+    <>
+      <TouchableOpacity 
+        style={styles.headerButton} 
+        onPress={() => navigation.goBack()}>
+      </TouchableOpacity>
+      <View style={styles.headerButton}>
+        <>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Favorites")}
+          >
+            <MaterialIcons name="favorite" size={22} color="red" style={styles.favoriteIcon} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.cartIcon}
+            onPress={() => navigation.navigate("CheckOut")}
+          >
+            <MaterialIcons name="shopping-cart" size={22} color="green" />
+           
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{cart?.length || 0}</Text>
+              </View>
+          
+          </TouchableOpacity>
+        </>
+      </View>
+    </>
   );
 };
+
+
+
+
+//header for product page
+const ProductsHeaderFavorites = ({ navigation }) => {
+  const {cart} = useSelector(state => state.cart);
+
+  return (
+    <>
+      <TouchableOpacity 
+        style={styles.headerButton} 
+        onPress={() => navigation.goBack()}>
+      </TouchableOpacity>
+      <View style={styles.headerButton}>
+        <>
+          {/* <TouchableOpacity
+            onPress={() => navigation.navigate("Favorites")}
+          >
+            <MaterialIcons name="favorite" size={22} color="red" style={styles.favoriteIcon} />
+          </TouchableOpacity> */}
+
+          <TouchableOpacity
+            style={styles.cartIcon}
+            onPress={() => navigation.navigate("CheckOut")}
+          >
+            <MaterialIcons name="shopping-cart" size={22} color="green" />
+           
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{cart?.length || 0}</Text>
+              </View>
+          
+          </TouchableOpacity>
+        </>
+      </View>
+    </>
+  );
+};
+
+
+//header for search page
+const SearchHeader=({navigation})=>{
+  const {search} = useSelector(state => state.product);
+  const dispatch=useDispatch();
+
+  const handleSearchChange = (text) => {
+    dispatch(updateSearchText(text));
+  };
+
+
+  return <View
+  style={styles.searchContainer}
+  >
+     <View style={styles.searchWrapper}>
+        <MaterialIcons name="search" size={24} color="black" />
+      
+<TextInput
+        style={styles.searchInput}
+        placeholder="Search..."
+        value={search}
+        placeholderTextColor="black"
+        onChangeText={(text) => handleSearchChange(text)} 
+      />
+
+</View>
+  </View>
+
+}
+
 
 
 function App(){
@@ -102,82 +155,150 @@ function App(){
   };
 
   return (
- 
-    <GroceryProvider>
+
+    <Provider store={store}>
+   
   <NavigationContainer>
       <Stack.Navigator initialRouteName="Home"
-      
       screenOptions={{
     headerShown: false
   }}
-      >
-        <Stack.Screen 
-        name="Home" component={Home} />
-    
-        <Stack.Screen
-          name="Products"
-          component={Products}
-          
-          options={({ navigation }) => ({
+  >
+    <Stack.Screen 
+    name="Home" component={Home} />
+
+    <Stack.Screen
+      name="Products"
+      component={Products}
+      options={({ navigation }) => ({
     headerShown: true,
     title: 'Deshi Grocery',
     headerTitleAlign: 'center',
-    headerTitleStyle: {
-      fontSize: 16,
-      color: "black",
-      fontWeight: '600',
-    },
+    headerTitleStyle: styles.headerButtonWrapper
+    ,
     headerLeft: () => (
+      <>
       <TouchableOpacity 
         style={styles.headerButton} 
-        onPress={() => navigation.goBack()}>
+        onPress={() => navigation.goBack()}
+        
+        >
         <MaterialIcons name="chevron-left" size={30} color="black" />
       </TouchableOpacity>
-    ),
-    headerRight: () => (
-      <TouchableOpacity style={styles.headerButton}>
-        <Text style={styles.headerButtonText}>Filter</Text>
+      <TouchableOpacity 
+        style={styles.searchIcon} 
+        onPress={() => navigation.navigate("Search")}>
+        <MaterialIcons name="search" size={20} color="black" />
       </TouchableOpacity>
+      </>
     ),
+    // headerRight: () => (
+    //   <View style={styles.headerButton}>
+    //   <>
+    //     <TouchableOpacity
+    //     onPress={()=>navigation.navigate("Favorites")}
+        
+    //     >
+    //     <MaterialIcons name="favorite" size={22} color="red" 
+    //       style={styles.favoriteIcon}
+    //     />
+    //     </TouchableOpacity>
+
+    //     <TouchableOpacity
+    //     style={styles.cartIcon}
+    //     onPress={()=>navigation.navigate("CheckOut")}
+    //     >
+    //     <MaterialIcons name="shopping-cart"  size={22} color="green"
+    //    />
+    //    <View>{}</View>
+    //    </TouchableOpacity>
+    //     </>
+    //   </View>
+    // ),
+   headerRight:()=> <ProductsHeader navigation={navigation} />,
+
   })}
-        />
+  />
 
 <Stack.Screen name="CheckOut" component={CheckOut}
 
 options={({ navigation }) => ({
             headerShown: true,
-            title: 'CheckOut',
+            title: 'Cart',
             headerTitleAlign: 'center',
-            headerTitleStyle: {
-              fontSize: 16,
-              color: "black",
-              fontWeight: '600',
-            },
+            headerTitleStyle: styles.headerTitleContainer,
             headerLeft: () => (
               <TouchableOpacity 
                 style={styles.headerButton} 
-                onPress={() => navigation.goBack()}
-              >
+                onPress={() => navigation.goBack()}>
                 <Icon name="chevron-left" size={20} color="black" />
-
               </TouchableOpacity>
             ),
             headerRight: () => (
               <View style={styles.headerButtonWrapper}>
-              <TouchableOpacity style={styles.headerButton}>
-            {/* <Icon name="cart-arrow-down" size={20} color="green" outlined /> */}
-            {/* <MaterialCommunityIcons name="cart-outline" size={22} color="green" outlined/> 
-            */}
-            <MaterialIcons name="shopping-cart"  size={22} color="green" 
+              <TouchableOpacity style={styles.headerButton}
+              onPress={()=>navigation.navigate("Products")}
+              >
+         
+            <MaterialIcons name="home"  size={22} color="green" 
             />
+
               </TouchableOpacity>
               </View>
             ),
           })}
  />
-      </Stack.Navigator>
+ <Stack.Screen name="Favorites" component={Favorites}
+
+options={({ navigation }) => ({
+            headerShown: true,
+            title: 'Favorites',
+            headerTitleAlign: 'center',
+            headerTitleStyle: styles.headerTitleContainer,
+            headerLeft: () => (
+              <TouchableOpacity 
+                style={styles.headerButton} 
+                onPress={() => navigation.goBack()}>
+                <Icon name="chevron-left" size={20} color="black" />
+              </TouchableOpacity>
+            ),
+         headerRight:()=><ProductsHeaderFavorites navigation={navigation}/>
+           
+          })}
+ />
+
+ <Stack.Screen 
+name='Login'
+component={Login}
+ />
+
+
+<Stack.Screen name="Search" component={SearchPage}
+
+options={({ navigation }) => ({
+            headerShown: true,
+            headerTitle:"",
+            headerTitleStyle: styles.headerTitleContainer,
+            headerLeft: () => (
+              <>
+              <TouchableOpacity 
+                style={styles.headerButton}
+                onPress={() => navigation.goBack()}
+                >
+                <Icon name="chevron-left" size={20} color="black" />
+              </TouchableOpacity>
+              </>
+            ),
+            headerRight:()=><SearchHeader/>
+           
+          })}
+ />
+
+
+    </Stack.Navigator>
     </NavigationContainer>
-    </GroceryProvider>
+
+    </Provider>
   );
 }
 
@@ -202,9 +323,11 @@ const styles = StyleSheet.create({
     
   },
   headerButton: {
+    width:"auto",
+    flexDirection:"row",
+    alignItems:'center',
     padding: 10,
-    // backgroundColor:"red",
-    borderRadius: 5,
+    
   },
   headerButtonText: {
     color: 'grey',
@@ -214,12 +337,85 @@ const styles = StyleSheet.create({
     width:40,
     height:40,
     borderRadius:20,
-    // marginRight:12,
     justifyContent: 'center',
     alignItems: 'center',  
     backgroundColor: '#e5ebf3',
     overflow: 'hidden'
+  },
+  headerTitleContainer:{
+    fontSize: 16,
+    color: "black",
+    fontWeight: '600',
+  },
+  favoriteIcon:{
+    paddingRight:10
+  },
+  cartIcon:{
+    width:40,
+    height:40,
+    backgroundColor:'#F0F8FF',
+    borderRadius:20,
+    justifyContent:'center',
+    alignItems:"center",
+    position:'relative'
+  },
+  cartBadge:{
+   position:'absolute',
+   width:20,
+   height:20,
+   borderRadius:10,
+   backgroundColor:'green',
+   justifyContent:"center",
+   alignItems:'center',
+   right:-10,
+  bottom:25
+  },
+  cartBadgeText:{
+    fontWeight:'700',
+    color:'white'
+  },
+  searchIcon:{
+    width:40,
+    height:40,
+    borderRadius:20,
+    backgroundColor:'#F0F8FF',
+    justifyContent:'center',
+    alignItems:'center',
+    marginLeft:15
+
+  },
+  searchContainer: {
+   
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    marginLeft:20,
+    display:'flex',
+    flexDirection:"row"
+  },
+  searchInput: {
+    height: 40,
+    // borderColor: 'gray',
+    // borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+   
+    width: '100%',
+    color: 'black',
+  },
+  searchWrapper:{
+    display:'flex',
+    flexDirection:'row',
+    alignItems:'center',
+    backgroundColor:"#F0F8FF",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    width: '100%',
+    color: 'black',
+
   }
+  
    
 });
 
